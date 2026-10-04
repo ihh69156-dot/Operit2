@@ -214,6 +214,21 @@ jobs:
         shell: pwsh
         run: python tools/build_scripts/check_build_environment.py --products app --github-runner
 
+      - name: Install TypeScript toolchain
+        shell: pwsh
+        run: |
+          npm install --no-audit --no-fund --prefix .ci-tools/typescript typescript@5.9.3
+          if ($LASTEXITCODE -ne 0) { throw 'TypeScript install failed' }
+
+      - name: Install workflow plugin dependencies
+        shell: pwsh
+        working-directory: plugins/packages/buildin/workflow
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          corepack pnpm install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+
       - name: Generate Dart proxy artifacts
         shell: pwsh
         run: |
