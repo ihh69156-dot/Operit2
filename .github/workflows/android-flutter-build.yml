@@ -158,6 +158,18 @@ jobs:
             throw "Android bindgen libclang was not prepared at $libclang"
           }
 
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Python venv and corepack
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          if ($LASTEXITCODE -ne 0) { throw 'Python venv preparation failed' }
+          .\.venv\Scripts\python.exe --version
+          corepack enable
+
       - name: Restore Android signing material
         shell: pwsh
         env:
