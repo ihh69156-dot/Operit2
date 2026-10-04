@@ -91,6 +91,24 @@ jobs:
           name: operit2-android-runtime-${{ github.sha }}
           path: apps/flutter/app/android/app/src/main
 
+      - name: Restore build caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\AppData\Local\Pub\Cache
+            C:\Users\runneradmin\.pub-cache
+            C:\Users\runneradmin\.cargo\registry
+            C:\Users\runneradmin\.cargo\git
+            C:\Users\runneradmin\AppData\Local\fvm
+            C:\Users\runneradmin\.gradle\caches
+            C:\Users\runneradmin\.gradle\wrapper
+            target
+            core/target
+            apps/flutter/native/operit-flutter-bridge/target
+          key: operit-build-${{ github.sha }}-${{ github.run_id }}
+          restore-keys: |
+            operit-build-
+
       - name: Install bootstrap Dart
         uses: dart-lang/setup-dart@v1
         with:
