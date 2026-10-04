@@ -40,8 +40,39 @@ $items = @(
 
 foreach ($item in $items) {
     $archivePath = Join-Path $downloadsDir $item.Archive
-    Write-Host "Downloading $($item.Name)"
-    Invoke-WebRequest -Uri $item.Url -OutFile $archivePath
+    $preStaged = $false
+    if (Test-Path -LiteralPath $archivePath) {
+        $existing = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToUpperInvariant()
+        if ($existing -eq $item.Sha256) {
+            Write-Host "Using pre-staged $($item.Name)"
+            $preStaged = $true
+        }
+    }
+    if (-not $preStaged) {
+        $urls = @($item.Url)
+        if ($item.Name -eq 'bash-5.2.37') {
+            $urls += 'https://ftp.wayne.edu/gnu/bash/bash-5.2.37.tar.gz'
+            $urls += 'https://ftpmirror.gnu.org/bash/bash-5.2.37.tar.gz'
+            $urls += 'https://mirrors.kernel.org/gnu/bash/bash-5.2.37.tar.gz'
+        }
+        if ($item.Name -eq 'busybox-1.38.0') {
+            $urls += 'https://mirrors.kernel.org/source/busybox/busybox-1.38.0.tar.bz2'
+        }
+        if ($item.Name -eq 'talloc-2.4.3') {
+            $urls += 'https://download.samba.org/pub/talloc/talloc-2.4.3.tar.gz'
+        }
+        foreach ($url in $urls) {
+            try {
+                Write-Host "Downloading $($item.Name) from $url"
+                Invoke-WebRequest -Uri $url -OutFile $archivePath
+                break
+            } catch {
+                Write-Host "Download failed from $url : $($_.Exception.Message)"
+                Remove-Item -LiteralPath $archivePath -Force -ErrorAction SilentlyContinue
+            }
+        }
+        if (-not (Test-Path -LiteralPath $archivePath)) { throw "All download sources failed for $($item.Name)" }
+    }
 
     $actualSha256 = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToUpperInvariant()
     if ($actualSha256 -ne $item.Sha256) {
