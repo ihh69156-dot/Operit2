@@ -40,7 +40,14 @@ jobs:
 
       - name: Fetch Android runtime sources
         shell: pwsh
-        run: pwsh -NoProfile -File tools/android-runtime/fetch_sources.ps1
+        run: |
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            pwsh -NoProfile -File tools/android-runtime/fetch_sources.ps1
+            if ($LASTEXITCODE -eq 0) { break }
+            Write-Host "Runtime source fetch attempt $attempt failed; retrying"
+            if ($attempt -eq 3) { exit 1 }
+            Start-Sleep -Seconds 20
+          }
 
       - name: Fetch Android NDK
         run: bash tools/android-runtime/fetch_ndk_wsl.sh
@@ -68,7 +75,7 @@ jobs:
   build-android:
     needs: build-android-runtime
     runs-on: windows-2025
-    timeout-minutes: 90
+    timeout-minutes: 180
     env:
       RUSTFLAGS: -Awarnings
       RUST_TOOLCHAIN_VERSION: 1.95.0
