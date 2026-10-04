@@ -82,6 +82,10 @@ jobs:
       FVM_VERSION: 4.3.0
 
     steps:
+      - name: Enable symlink checkout
+        shell: pwsh
+        run: git config --global core.symlinks true
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -135,6 +139,13 @@ jobs:
         working-directory: apps/flutter/app
         shell: pwsh
         run: fvm install --skip-pub-get
+
+      - name: Precache Android engine
+        shell: pwsh
+        working-directory: apps/flutter/app
+        run: |
+          & .\.fvm\flutter_sdk\bin\flutter.bat precache --android
+          if ($LASTEXITCODE -ne 0) { throw 'Android engine precache failed' }
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
